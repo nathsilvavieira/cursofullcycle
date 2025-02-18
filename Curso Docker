@@ -1,0 +1,124 @@
+Curso Fullcycle => Container != Docker
+Capitulo 1 
+** Conceitos basicos. **
+- Container empacota o código e todas as suas dependências para que o software pode ser executado de forma rapida em qualquer ambiente. 
+- Principais pontos 
+	São imutaveis, pode ser executado sempre de forma idêntica. 
+	Isola recursos computacionais, não afeta a maquina que está rodando host, SO. 
+- É leve, pois executa como um processo. 
+- Utiliza kernel do SO para executar. Pois ele pensa que é um SO completo, por esse motivo a visibilidade dos processos é limitada. 
+	Container opera volumes e sistemas de arquivos montados que permitem acessar o kernel sem impacto no host. 
+- Ele pode ser iterrompido e retomado posteriormente, ou até mesmo removido do sistema. 
+- As imagens podem ser entendidas como snapshoots, pacotes que contêm tudo que é necessario para execução
+- Container roda em Linux
+- Principal intuito é que rode em qualquer lugar em qualquer maquina, so etc. 
+
+** Container x Maquinas Virtual **
+
+- VM - Executa SO completo, kernel, hypervirsor, isso resulta em consumo de recursos, maior tempo de execução e menos eficiência em uso de memória e CPU;
+
+- Container - Compartilha kernel do host conseguindo isolar o que vai rodar. Isso o torna mais leve, pois otimiza recursos e sua inicialização é instantânea. Recomendado para ambiantes que precisem de rapida escalabilidade e alta densidade de aplicativos em um unico host. 
+
+Docker é uma ferramenta completa para trabalhar com containers, funcionando também como um container runtime, ou seja, um gerenciador de execução de containers. 
+
+** Container Runtime **
+
+Container runtime é um software que permite a execução de containers. A Docker, junto com outras empresas, criou há alguns anos a iniciativa chamada Open Containers Initiative. A Open Containers Initiative pode ser acessada em opencontainers.org, onde você encontrará mais informações sobre essa padronização.Isso significa que ele possui todas as especificações necessárias para que um container possa ser executado.Essa padronização é fundamental para garantir a interoperabilidade entre os diferentes runtimes e facilitar o uso de containers em diversos ambientes.
+
+** Docker Contexto **
+A diferença entre o Docker Community Edition e o Docker Desktop. O Docker Community Edition, também conhecido como Docker Engine, é open source e permite rodar containers sem custos, enquanto o Docker Desktop é um produto da Docker Inc., voltado para o desenvolvimento. 
+
+O Docker opera no formato client-server. Quando você usa o comando docker no terminal, está interagindo com a interface de linha de comando (command-line interface), que funciona como um cliente. Cada comando é enviado para um servidor, o docker-d, que é o daemon responsável por gerenciar todo o ecossistema de containers. Esse daemon centraliza o gerenciamento, mas também representa um ponto único de falha (SPOF - Single Point of Failure). Se o docker-d cair, todos os containers gerenciados por ele também caem. 
+
+O Docker, por padrão, requer permissões de superusuário (root) para ser executado. Essa característica pode ser explorada por vulnerabilidades e representa um risco potencial. Contudo, o Docker também pode ser configurado para funcionar em modo rootless, onde utiliza apenas o usuário local, eliminando a dependência de privilégios elevados.
+
+** Docker Inc **
+
+Docker Desktop:  Se você é desenvolvedor, quer trabalhar na sua máquina normal, você pode utilizar o Docker Desktop. O Docker Desktop automatiza toda essa configuração, eliminando a complexidade. Ele também ajuda a gerenciar os containers no dia a dia.
+Docker Hub: é uma outra ferramenta, um ecossistema da Docker, onde você pode armazenar essas imagens e, inclusive, acessar imagens mais populares do mercado para você sair utilizando no dia a dia. Então, com o Docker Hub, você vai ver que existem imagens verificadas, imagens oficiais, imagens de empresas que trabalham, que mantêm imagens, não oficiais da Docker.
+Build Cloud: Build Cloud, que faz o empacotamento dessas imagens de uma forma muito mais rápida do que qualquer esteira de CI/CD ou qualquer coisa desse tipo.
+Docker Scout: que é focado na área de segurança. Então, toda vez que você cria uma imagem, uma aplicação, ele consegue varrer aquilo e trazer, de forma extremamente detalhada, tudo que tem de vulnerabilidade de segurança.
+Docker AI: que é uma iniciativa deles para conseguir rodar softwares e ferramentas de AI de forma containerizada.
+InfoSifter: Essa empresa tinha um foco muito grande em segurança e verificação de imagem.
+ Tilt: é uma empresa focada para você fazer desenvolvimento de aplicações, normalmente baseadas em microsserviços. 
+ Kubernetes: que é um orquestrador de containers. Vamos imaginar que ele é um Docker muito focado para execução de containers e escala de containers de forma distribuída.
+AtomicJar: responsável pela criação do Testcontainers, permitindo desenvolver aplicações e, na hora de criar seus testes, utilizar containers.   
+Mutagen.io: que criou um recurso extremamente fantástico chamado Synchronized File Shares. 
+ 
+ 
+ 
+ 
+ Link docker https://docs.docker.com/engine/install/ubuntu/
+ 
+ Capitulo 2 
+ 
+ **Executando container e primeiros passos **
+ 
+ - Docker Run : O run serve para executar um container. Agora, o ponto que quero que você entenda é que, ao usar o comando docker run e colocar um nome de imagem à frente, você está especificando qual imagem será utilizada para criar o container.
+ - Toda vez que você executa o comando docker run, a primeira coisa que o Docker faz é verificar se essa imagem já existe na sua máquina
+ - <imagem>:latest, ele está se referindo à versão mais recente da imagem. 
+ - imagem nada mais é do que um conjunto de arquivos que, quando descompactados, permitem executar o código dentro de um processo no seu computador, gerando o container.
+ - Quando você não especifica uma URL completa, ele utiliza o registry padrão, que no caso é o Docker Hub (ou Docker IO).
+ - Quarta linha temos uma camada da nossa imagem. Isso significa que, toda vez que você roda uma aplicação, o Docker utiliza um mecanismo chamado Overlay File System.Cada camada que você baixa possui um hash específico, que define a identidade dessa imagem. Isso permite que, se você baixar um software que usa Ubuntu e outro que usa Alpine, o Docker analisa o que essas duas imagens têm em comum. Ele identifica os segmentos iguais e utiliza os já existentes, como os do Ubuntu, para o Alpine, baixando apenas as diferenças. Depois, o Docker combina todos esses segmentos (ou layers), junta-os e os extrai para rodar o seu container.
+ - Quinta linha, o identificador que garante a autenticidade da imagem. Ele indica que essa nova imagem foi baixada e está sendo usada. Sobre essa mensagem que aparece mais abaixo: parece uma mensagem padrão de documentação. Na verdade, essa imagem é o resultado da execução do container.
+ - Tudo que você deseja executar em um container, não precisa continuar rodando, basta especificar o programa que o container deve executar. Ele executa, finaliza e pronto.Os containers só continuam rodando enquanto o programa especificado no entry point (ou seja, o comando configurado para rodar quando o container é iniciado) estiver ativo. 
+ - docker ps: mostra somente containers em execução
+ - docker ps -a: tras todos os containers criados ativos ou não
+ 
+ ** Nomeando Containers **
+ 
+ - docker run --name mycontainer hello-word 
+Toda vez que executar docker run vai criar um container 
+- comando docker abre documentação da docker 
+- comando docker run --help abre documentação do run
+- docker run --help | grep name :  filtra todas opções que estão relacionadas com name
+- quando tem muitos parametros usar igual : docher run --name=mycontainer -param1 -param2
+- Sempre depois do run <imagem> depois comando que o docker vai executar nesse container
+- docker sempre criar o container, mas não necessariamanete ele mantem a execução;
+
+**Parando, iniciando e removendo containers**
+
+Para remover precisa estar parado ou ter saido, em execução esses comandos não vão funcionar nessa etapa precisa parar ou forçar uma remoção. 
+ - remover : docker rm <idcontainer> enter 
+ - remover 2 : docker rm <nome-container>
+ - docker ps -a para ver todos containers 
+ 
+ - docker run --name mynginx nginx - Cria um container de servidor web nginx 
+ - docker ps : lista containers ativos 
+ - docker stop mynginx - para processo e container sai
+ - docker star mynginx - inicializa o processo de um container existente
+ - docker rm -f mynginx - remove container em execução de forma forçada. 
+ 
+ **Attach e Dettach**
+ 
+ - Para não ficar com terminal bloqueado quando um container está rodando. Executar comando -d  o container vai rodar e não vai bloquear o terminal, ele vai criar o container e vai printar o id do container. Ex: docker run -d nginx 
+ - docker attach <idcontainer> ele vai atachar o container novamente, bloqueando o terminal
+ 
+ ** Executando comando e removendo containers automaticamente**
+ 
+ - Para executar um comando dentro do container: docker exec <idcontainerL> ls vai executar um comando dentro do container
+ - docker exec <idcontainerL> ls -la vai trazer listagem completa de documentos dentro do container
+ - Entrar dentro de um container docker exec -i -t <idcontainerL> bash vai executar container de forma interativa usando terminal, pode ser passado usando -it também, nesse exemplo estamos pedindo para acessar dentro do container usando o bash.
+ - docker rm -f <Informar todos Ids> vai deletar todos os container 
+ - Para container se autoremover sempre que ele sair : docker run --rm nginx
+ 
+ ** Removendo containers com subcomandos**
+ - docker ps -a -q : tras todos os ids dos containers criados
+ - docker rm -f $(docker ps -a -q) combina comando a cima para deletar no comando de remover container   
+ 
+ ** Publicando Portas**
+ 
+ - Para acessar a porta do container precisamos acessar o terminal do container como visto anteriormente, por padrão não conseguimos acessar as portas dos container na fora dele. 
+ 
+ - docker run  -p 8080:80 toda vez que acessar a porta 8080 o docker vai redirecionar para a porta 80, pega minha porta e joga para aquela porta 8080 e aponta para porta 80
+ 
+ - o -p na realidade, publica uma porta, é um publish.
+ 
+ - Portas baixas(de 2 numeros) para serem executadas no nosso computador precisa de um super usuario. 
+ 
+ - docker run --rm -p 8080:80 nginx  sobe o container apontando para porta 8080;
+ - docker ps para expor dados do container;
+ - docker exec -i -t <idcontainerL> bash para abrir terminal do container;
+ - curl localhost para verificar se o nginx subiu.
+
+

@@ -121,4 +121,237 @@ Para remover precisa estar parado ou ter saido, em execução esses comandos nã
  - docker exec -i -t <idcontainerL> bash para abrir terminal do container;
  - curl localhost para verificar se o nginx subiu.
 
+Capitulo 3 
+Volume e bigmount
+
+**Persistencia de dados container**
+ A gente baixa uma imagem feita em diversas camadas, por isso que a gente chama isso de Overlay File System, porque é um file system que ele consegue se complementar através de camadas. E na hora que o seu container entra em execução, é criado basicamente duas separações dentro dele. Uma separação é meio que camada de imagem. Essa separação de camada de imagem é imutável. 
+ Além disso, ele cria uma outra camada chamada de camada de container. Essa camada que a gente chama de mundo do container. A camada de container é uma camada que a gente tem permissão de leitura e permissão de escrita. Então, por isso que quando a gente entra no container, a gente consegue listar,  ver os arquivos, editar arquivos, tudo isso. Mas a gente sabe que ele foi gerado por essa camada básica através da nossa imagem.
+ A gente acaba caindo na aquela pegadinha de utilizar um container como uma máquina virtual, porque tudo que a gente escreve na camada de container é perdido no momento que o container é removido.
+ 
+ **Bind mounts x volumes **
+ 
+ Persistencia de dados 
+ 
+ - No bind mount, basicamente, a gente está pegando uma pasta do nosso computador e mapeando para dentro do container. Isso significa que todas as vezes que eu alterar um dado no meu computador — eu chamo computador do host, porque é a minha máquina — essa alteração vai ser refletida no meu container. Isso é o que acontece.
+ - Alguns problemas que podem ser listados seria quanto a permissão de acesso.
+ - Bind mount indicado usar quando for desenvolvimento.
+ 
+ - O volume é gerenciado pelo docker. Então, quando você cria o volume, ele cria, uma pasta interna. Tem um caminho do Docker, se você for procurar, onde ficam os arquivos desse volume, mas não é compartilhada, uma pasta do meu computador que eu fico mexendo nela o dia inteiro, como eu uso para desenvolver.
+ Usa quando quer armazenar arquivos onde meu host não tem acessos, aumentando a segurança, quando quer persistir dados, ambiente de produção e não gera problemas de permissão de arquivos do host. 
+ 
+ **Bind mount**
+ 
+ - Para criar o bind mount : docker run -d -p 8080:80 -v $(pwd)/my_nginx_html:/usr/share/nginx/html nginx
+ - verificar arquivo :curl localhost:8080
+ 
+ **Parametros Bind mount**
+ 
+ - comando -v cria tanto um bind mount como um volume 
+ 
+ - comando mount : docker run -d -p 8080:80 --mount type=bind, source=$(pwd)/my_nginx_html, target=/usr/share/nginx/html nginx 
+ 
+ ** Criando e inspecionando Volumes**
+ 
+ - docker volume create my_volume - para criar volume
+ - para saber mais opções docker volume --help
+ - Docker volume ls - lista todos volumes 
+ - docker volume prune - apaga todos os volumes
+ - dcoker volume inspect my_volume - tras todas as infos do volume na propriedade mount point,encontramos local onde o volume está localizado
+ - Intuito de usar o volume é não saber onde está armazenado os arquivo, caso contrario indicado que seja usado um bind mount. 
+ - Existe a possibilidade de alterar o drive para apontar para outro local, por exemplo um cloud provider. 
+ 
+ **Montagem de volume e copiando arquivos**
+ 
+ - Como adicionar arquivos no volume para trabalhar com ela 
+ - docker cp $(pwd)/my_nginx_html/index.html <nome_container>:/usr/share/nginx/html - cria copia de um arquivo local para o volume 
+ - docker run -d -p 8080:80 -v my_volume:/usr/share/nginx/html nginx - Cria container com volume 
+ 
+ **Restaurando Backups de volume com Busybox**
+ Para garantir a persistência dos dados armazenados em volumes, é uma prática recomendada criar backups regulares, especialmente em ambientes de produção.
+ 
+- docker run --rm -v my_volume:/data -v $(pwd):/backup busybox tar czf /backup/backup.tar.gz /data - para criar um backup de um volume
+ 
+- docker run --rm -v my_volume:/data -v $(pwd):/backup busybox tar xzf /backup/backup.tar.gz -C / - para restaurar um volume
+ 
+ Capitulo 4 - Imagens Docker
+ 
+ **Imagens e dicas **
+ 
+ - docker images - tras todas imagens criadas no pc
+ - Toda imagem tem um id, normalmente é um hexadecimal - docker images -q
+ - Toda imagem tem um nome
+ - coluna tag - versiona imagem
+ - docker run <imagem>:latest - vai pegar sempre a versão atualizada da imagem 
+ - Sempre utilize as suas imagens com as versões forçadas/explicita (ex: 2.0), nunca use a tag latest pois existe risco de quebrar. 
+ - Tamanho da imagem, quanto maior, mais espaço em disco consome e mais demora para subir/executar. 
+ - Crie imagens com menor tamanho possivel, com a quantidade minima de recursos para evitar problemas de segurança/ vunerabilidades.
+ 
+ 
+ **Gerenciando Imagens **
+ 
+ - docker rmi <nome-imagem> apaga imagem 
+ - docker rmi -f <nome-imagem> - remove forçadamente ima imagem
+ - docker inspect <nome-imagem> ou docker inspect <nome-imagem>:<versão> para inspecionar versões de imagens
+ Layers - Imagens são baixadas em layers, os layers constroem as imagens 
+ arquitetura da imagem - maquinas com arquitetura rm
+ Entryoint
+ comando inicial -cmd 
+ - docker inspect --format='{{.Id}}' <nome-imagem> - filtra para trazer apenas o id da imagem
+ Docker desenvolvido em GO
+ - search : Docker search nginx - Importante verificar origem das imagens para não ter acesso indevido a sua maquina
+ - As imagens sem / na frente são oficiais, imagens/algun-nome não são oficiaias. 
+ - docker pull <imagem>:<versão> = nginx:1.21 Vai baixar a imagem na versão solicitada, não é obrigatorio passar versão da imagens nesse caso. 
+ - Remover imagens não utilizadas - docker image prune
+ - docker image prune -a - remove imagens que não tem container associado a ela
+ - docker images para verificar imagens 
+ - docker ps -a para verificar containers 
+ - docker rmi $(docker images -q) - remove todas as imagens dos ids listados 
+ 
+ **Filtrando e verificando utilização de disco**
+ - docker pull nginx:1.22 baixa imagem na versão 
+ - docker images --filter before=nginx:1.22 Vai filtrar pelas imagens posteriores a versão informada
+ - docker system df - vai trazer listas de componentes(imagens, containers,etc), atividade e tamanho
+ 
+ 
+ **Dockerhub, imagens confiaveis e SBOM**
+ 
+ - Todas imagens com check são imagens verificadas pela Docker
+ - Docker Official Image são imagens da libery da docker, criadas pela docker
+ - Docker sponsored open source - projetos Open source mantidas pela docker 
+ - SBOM  SOFT BILL OF MATERIAL relação de tudo que a imagem usa e suas licenças e como foi criada. 
+ 
+ **Explorando Tags, versões e verificação de vunerabilidade com scout**
+ 
+ -scout scanners de vunerabiliade 
+ - docker scout quickview nginx 
+ - Criar conta Dockerhub 
+ 
+ 5. Docker Hub
+Recursos do Docker Hub
+O Docker Hub oferece vários recursos que facilitam o gerenciamento e distribuição de imagens:
+
+Criação de Conta e Namespace
+
+	Qualquer pessoa pode criar uma conta gratuita no Docker Hub.
+	Ao criar uma conta, você obtém um namespace exclusivo (geralmente seu nome de usuário).
+	Esse namespace é usado como prefixo para todas as imagens que você criar e enviar para o Docker Hub.
+	Exemplo: Se seu nome de usuário é joaosilva, suas imagens terão o formato joaosilva/nome-da-imagem.
+	
+Imagens Oficiais, Verificadas e de Comunidade
+
+	Imagens Oficiais: Mantidas pela equipe Docker ou pela comunidade, sem namespace no nome. Exemplo: nginx, mysql.
+	Imagens Verificadas: Criadas por fornecedores de software e verificadas pelo Docker. Elas possuem um selo de verificação e garantias adicionais de segurança e suporte.
+	Imagens de Comunidade: Criadas por usuários do Docker Hub. Podem ser úteis, mas é importante verificar a confiabilidade do mantenedor.
+	Organização de Tags
+	
+	As imagens podem ter várias tags que geralmente representam diferentes versões ou variações.
+	A tag padrão é latest, mas é recomendável especificar uma tag específica para garantir consistência.
+	Exemplo: nginx:1.21 refere-se à versão 1.21 do Nginx.
+	
+Aspectos de Segurança e SBOM
+
+	SBOM (Software Bill of Materials): Muitas imagens verificadas fornecem um SBOM, que é uma lista detalhada de todos os componentes e dependências incluídos na imagem.
+	O SBOM ajuda na transparência e segurança, permitindo que os usuários conheçam exatamente o que está dentro da imagem.
+	Imagens verificadas passam por verificações adicionais de segurança, incluindo varreduras de vulnerabilidades.
+Repositórios Públicos e Privados
+
+	Repositórios Públicos: Qualquer pessoa pode acessar e baixar as imagens.
+	Repositórios Privados: Acesso restrito; requer autenticação. Útil para armazenar imagens internas ou confidenciais.
+Automação de Builds
+
+	O Docker Hub pode ser integrado a repositórios de código (como GitHub ou Bitbucket) para automatizar o processo de build de imagens quando há novas alterações no código.
+
+Webhooks e Integração com CI/CD
+
+	Webhooks podem ser configurados para notificar serviços externos quando eventos ocorrem no Docker Hub, como quando uma nova imagem é enviada. Isso facilita a integração com pipelines de CI/CD.
+
+Visualização de Histórico de Builds e Tags
+
+	O Docker Hub mantém um histórico de builds e permite que você gerencie as diferentes tags de suas imagens, facilitando o controle de versões e atualizações.
+	
+	Capitulo 4 - Imagens Customizadas 
+	
+	**Criando um app e imagem customizada**
+	
+ - npm init para instalar pck json
+ - npm i express --save para instalar express 
+ - criar index.js
+ - Como trabalhar com node dentro de um container 
+ - Primeiro precisa rodar um app em uma imagem para rodar a app
+ - Cada comando vai criando uma layer 
+ - Sempre se basear numa imagem que ja xiste
+ 
+ ** Arg / env **
+ 
+ - ARG :funciona somente no momento do build da imagem 
+ --docker build --build-arg NODE_VERSION=21.0.0 -t nathsilvavieira/docker-node-exemple:latest .
+ - ENV: Variaveis de ambiente, funciona somente no momento do build da imagem
+ - docker run -p 3001:3001 -e MESSAGE="Hello Docker" nathsilvavieira/docker-node-exemple:latest
+ 
+ **hEALTHCHECK**
+ 
+ - / ENTER TAB PARA COLOCAR COMANDO NA SEGUNDA LINHA
+ - -f se não conseguir fazer a requisição ele retorna uma falha
+ HEALTHCHECK --interval=10s --timeout=5s --start-period=5s --retries=3 \ 
+    CMD [ "curl","-f","http://localhost:3001" ] 
+- Rodar build para ele implementar 
+- rodar comando docker ps para verificar se a app está saudavel    
+
+**Cache nos layers e dockerignore**
+.dockerignore
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

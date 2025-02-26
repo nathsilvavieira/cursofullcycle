@@ -299,7 +299,38 @@ Visualização de Histórico de Builds e Tags
 - rodar comando docker ps para verificar se a app está saudavel    
 
 **Cache nos layers e dockerignore**
-.dockerignore
+
+criar arquivo .dockerignore
+
+**Otimizando imagens**
+
+- Baixar imagens tamanho otimizado 
+# FROM node:${NODE_VERSION}-alpine
+# FROM node:${NODE_VERSION}-slim
+
+- Baixar os repositorios, remove o que não precisa. 
+- RUN apt-get update \ 
+    && apt-get install -y vim \ 
+    && rm -rf /var/lib/apt/lists/*
+- Usar o -y pra não solicitar confirmação na instalação 
+
+- Para implementar mudanças no dockerfile precisa rodar sempre o comando de build
+
+**Multistage build e app em golang**
+docker build -t nathsilvavieira/docker-golang-exemple:latest .
+
+
+**Entrypoint vs CMD **
+
+- docker build --no-cache -t nathsilvavieira/docker-golang-exemple:latest .
+- Comando --no-cache para não cachear app
+-docker run --rm nathsilvavieira/docker-golang-exemple:latest ls -la 
+
+**Labels **
+- Labels agrupa metadados que podem ser utilizados para mudar o comportamento da app ou para conseguir organizar a app.
+
+**Imagens base e filhas com ONBUILD**
+ 
  
  
  
